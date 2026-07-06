@@ -2,9 +2,8 @@
 
 import { redirect } from "next/navigation";
 import { ApiError, apiFetch } from "@/lib/api";
+import { API_BASE_URL } from "@/lib/config";
 import { clearToken, setToken } from "@/lib/session";
-
-const API_BASE_URL = process.env.LARAVEL_API_URL ?? "http://127.0.0.1:8123/api/v1";
 
 export type LoginState = { error?: string };
 

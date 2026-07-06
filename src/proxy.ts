@@ -6,10 +6,14 @@ export function proxy(request: NextRequest) {
   const hasSession = request.cookies.has(SESSION_COOKIE);
   const { pathname } = request.nextUrl;
 
+  // /login is always reachable. Proxy can't validate the token (that needs a
+  // real API call), so it must not redirect away from /login just because a
+  // cookie is present — a stale/expired token would otherwise trap the user
+  // in an infinite loop with the dashboard layout's own 401 -> /login redirect,
+  // since Server Components aren't allowed to clear cookies to break it from
+  // that side. The login page itself checks a real session and redirects to
+  // "/" if it's actually valid.
   if (pathname === "/login") {
-    if (hasSession) {
-      return NextResponse.redirect(new URL("/", request.url));
-    }
     return NextResponse.next();
   }
 

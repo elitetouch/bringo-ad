@@ -1,7 +1,6 @@
 import "server-only";
 import { getToken } from "@/lib/session";
-
-const API_BASE_URL = process.env.LARAVEL_API_URL ?? "http://127.0.0.1:8123/api/v1";
+import { API_BASE_URL } from "@/lib/config";
 
 export class ApiError extends Error {
   status: number;

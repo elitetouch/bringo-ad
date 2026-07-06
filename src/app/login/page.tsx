@@ -1,69 +1,30 @@
-"use client";
+import { redirect } from "next/navigation";
+import { apiGet } from "@/lib/api";
+import { getToken } from "@/lib/session";
+import { LoginForm } from "./LoginForm";
 
-import { useActionState } from "react";
-import { loginAction, type LoginState } from "@/lib/actions/auth";
+type Profile = { user: { roles: string[] } };
 
-const initialState: LoginState = {};
+export default async function LoginPage() {
+  // Only bother checking if a token cookie exists at all — avoids a wasted API
+  // call on the common case (no session yet).
+  let isValidAdmin = false;
 
-export default function LoginPage() {
-  const [state, formAction, pending] = useActionState(loginAction, initialState);
+  if (await getToken()) {
+    try {
+      const res = await apiGet<Profile>("/profile");
+      isValidAdmin = res.data.user.roles?.includes("admin") ?? false;
+    } catch {
+      // stale/invalid token — fall through and show the login form, a fresh
+      // login will overwrite the bad cookie
+    }
+  }
 
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-brand-900 px-4">
-      <div className="w-full max-w-sm rounded-2xl bg-white p-8 shadow-xl">
-        <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-brand-600 text-xl font-bold text-white">
-            B
-          </div>
-          <h1 className="text-xl font-semibold text-gray-900">Bringo Direct</h1>
-          <p className="mt-1 text-sm text-gray-500">Super admin sign in</p>
-        </div>
+  // redirect() throws internally, so it must not be called from inside the
+  // try/catch above or its own throw would get swallowed as "stale token".
+  if (isValidAdmin) {
+    redirect("/");
+  }
 
-        <form action={formAction} className="space-y-4">
-          <div>
-            <label htmlFor="email" className="mb-1 block text-sm font-medium text-gray-700">
-              Email
-            </label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              required
-              autoComplete="email"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-              placeholder="admin@bringodirect.com"
-            />
-          </div>
-          <div>
-            <label htmlFor="password" className="mb-1 block text-sm font-medium text-gray-700">
-              Password
-            </label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              required
-              autoComplete="current-password"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-              placeholder="••••••••"
-            />
-          </div>
-
-          {state.error && (
-            <p className="rounded-lg bg-danger-50 px-3 py-2 text-sm text-danger-700">
-              {state.error}
-            </p>
-          )}
-
-          <button
-            type="submit"
-            disabled={pending}
-            className="w-full rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:opacity-60"
-          >
-            {pending ? "Signing in…" : "Sign in"}
-          </button>
-        </form>
-      </div>
-    </div>
-  );
+  return <LoginForm />;
 }
