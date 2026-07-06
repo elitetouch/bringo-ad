@@ -1,36 +1,45 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Bringo Direct — Super Admin
 
-## Getting Started
+Next.js admin dashboard for managing users, merchants (approval + KYC review), shoppers,
+store brands/outlets, products, orders, and subscriptions on the Bringo Direct platform.
+It is a pure client of the Laravel API in the `bringo-api` repo — all data lives there.
 
-First, run the development server:
+## Requirements
+
+- Node 20+
+- The Laravel API running and reachable (see `LARAVEL_API_URL` below), with an `admin`
+  Spatie role assigned to at least one user (there is no self-service admin signup —
+  create one via `php artisan tinker` on the API: `$user->assignRole('admin');`)
+
+## Getting started
 
 ```bash
+npm install
+cp .env.example .env.local   # set LARAVEL_API_URL
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000). You'll be redirected to `/login`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## How auth works
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The Laravel API uses Sanctum bearer tokens, not cookies. This app never exposes that
+token to the browser: `loginAction` (a Server Action) calls the API's `/login` and
+`/profile` endpoints server-side, confirms the `admin` role, and stores the token in an
+**httpOnly** cookie. Every subsequent page/mutation reads that cookie server-side
+(`lib/api.ts`) and attaches it as `Authorization: Bearer <token>` when calling the API —
+the browser only ever talks to this Next.js origin. `proxy.ts` (Next.js 16 renamed
+`middleware.ts` to `proxy.ts`) gates every route except `/login` on that cookie's
+presence.
 
-## Learn More
+## Environment variables
 
-To learn more about Next.js, take a look at the following resources:
+| Variable          | Description                                          |
+| ------------------ | ----------------------------------------------------- |
+| `LARAVEL_API_URL` | Base URL of the Laravel API, e.g. `https://api.bringodirect.com/api/v1` |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Deploying
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Deploy to Vercel and set `LARAVEL_API_URL` to the production API URL in the project's
+environment variables. No other configuration is required — the API's CORS is not in
+the request path since all API calls happen server-side.
