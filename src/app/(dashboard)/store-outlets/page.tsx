@@ -10,7 +10,8 @@ type OutletRow = {
   city: string | null;
   is_active: boolean;
   status: string;
-  storeBrand: { name: string; merchant: { business_name: string | null } | null } | null;
+  store_logo_url: string | null;
+  store_brand: { name: string; merchant: { business_name: string | null } | null } | null;
   country: { name: string; iso2: string } | null;
 };
 
@@ -71,13 +72,29 @@ export default async function StoreOutletsPage({
             {data.storeOutlets.data.map((outlet) => (
               <tr key={outlet.id}>
                 <td className="px-4 py-3 font-medium text-gray-900">
-                  {outlet.name}
-                  {outlet.city && <span className="ml-1 text-xs text-gray-400">({outlet.city})</span>}
+                  <div className="flex items-center gap-3">
+                    {outlet.store_logo_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={outlet.store_logo_url}
+                        alt=""
+                        className="h-8 w-8 shrink-0 rounded object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-gray-100 text-xs text-gray-400">
+                        {outlet.name.charAt(0)}
+                      </div>
+                    )}
+                    <span>
+                      {outlet.name}
+                      {outlet.city && <span className="ml-1 text-xs text-gray-400">({outlet.city})</span>}
+                    </span>
+                  </div>
                 </td>
                 <td className="px-4 py-3 text-gray-600">
-                  {outlet.storeBrand?.name}
-                  {outlet.storeBrand?.merchant?.business_name
-                    ? ` · ${outlet.storeBrand.merchant.business_name}`
+                  {outlet.store_brand?.name}
+                  {outlet.store_brand?.merchant?.business_name
+                    ? ` · ${outlet.store_brand.merchant.business_name}`
                     : ""}
                 </td>
                 <td className="px-4 py-3 text-gray-600">{outlet.country?.iso2 || "—"}</td>

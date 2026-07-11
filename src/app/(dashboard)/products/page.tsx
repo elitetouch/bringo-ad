@@ -9,9 +9,9 @@ type ProductRow = {
   title: string;
   publish_state: string;
   is_active: boolean;
-  storeBrand: { name: string; merchant: { business_name: string | null } | null } | null;
+  store_brand: { name: string; merchant: { business_name: string | null } | null } | null;
   category: { name: string } | null;
-  primaryImage: { url: string } | null;
+  primary_image: { url: string } | null;
 };
 
 type ProductsResponse = {
@@ -73,17 +73,21 @@ export default async function ProductsPage({
               <tr key={product.id}>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">
-                    {product.primaryImage?.url && (
+                    {product.primary_image?.url ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={product.primaryImage.url} alt="" className="h-8 w-8 rounded object-cover" />
+                      <img src={product.primary_image.url} alt="" className="h-8 w-8 rounded object-cover" />
+                    ) : (
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-gray-100 text-xs text-gray-400">
+                        {product.title.charAt(0)}
+                      </div>
                     )}
                     <span className="font-medium text-gray-900">{product.title}</span>
                   </div>
                 </td>
                 <td className="px-4 py-3 text-gray-600">
-                  {product.storeBrand?.name}
-                  {product.storeBrand?.merchant?.business_name
-                    ? ` · ${product.storeBrand.merchant.business_name}`
+                  {product.store_brand?.name}
+                  {product.store_brand?.merchant?.business_name
+                    ? ` · ${product.store_brand.merchant.business_name}`
                     : ""}
                 </td>
                 <td className="px-4 py-3 text-gray-600">{product.category?.name || "—"}</td>
