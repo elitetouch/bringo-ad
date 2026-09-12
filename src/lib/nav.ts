@@ -12,5 +12,6 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/orders", label: "Orders" },
   { href: "/subscriptions", label: "Subscriptions" },
   { href: "/subscription-plans", label: "Subscription Plans" },
+  { href: "/payment-verification", label: "Payment Verification" },
   { href: "/countries", label: "Countries" },
 ];

@@ -1,7 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { apiPatch, apiPost } from "@/lib/api";
+import { redirect } from "next/navigation";
+import { ApiError, apiPatch, apiPost } from "@/lib/api";
 
 function id(formData: FormData): string {
   return String(formData.get("id"));
@@ -107,6 +108,38 @@ export async function createSubscriptionPlanPrice(formData: FormData) {
     amount: Number(formData.get("amount")),
   });
   revalidatePath("/subscription-plans");
+}
+
+// ---- Payment verification (Pesapal safety net: the browser callback and IPN
+// usually finalize a payment automatically, but if both miss - e.g. the
+// customer closed the browser early, or the IPN delivery failed - this
+// re-runs the same verify-with-Pesapal + activate logic on demand.) ----
+async function verifyPesapalAttempt(kind: "subscriptions" | "orders", attemptId: string) {
+  let result: "success" | "error";
+  let message: string;
+
+  try {
+    await apiPost(`/admin/payments/${kind}/${attemptId}/verify`);
+    message =
+      kind === "subscriptions"
+        ? "Payment verified with Pesapal - subscription activated."
+        : "Payment verified with Pesapal - order(s) marked paid.";
+    result = "success";
+  } catch (err) {
+    message = err instanceof ApiError ? err.message : "Unexpected error verifying payment.";
+    result = "error";
+  }
+
+  revalidatePath("/payment-verification");
+  redirect(`/payment-verification?result=${result}&message=${encodeURIComponent(message)}`);
+}
+
+export async function verifySubscriptionPayment(formData: FormData) {
+  await verifyPesapalAttempt("subscriptions", id(formData));
+}
+
+export async function verifyOrderPayment(formData: FormData) {
+  await verifyPesapalAttempt("orders", id(formData));
 }
 
 // ---- Countries ----
